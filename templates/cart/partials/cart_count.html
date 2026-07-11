@@ -1,0 +1,9 @@
+<span
+  id="cart-count-badge"
+  class="absolute -top-1.5 -right-2 tabular-nums text-[9px] font-bold text-black"
+  hx-get="{% url 'cart:count' %}"
+  hx-trigger="cartUpdated from:body"
+  hx-swap="outerHTML"
+  hx-push-url="false"
+  hx-boost="false"
+>{% if cart_count > 0 %}{{ cart_count }}{% endif %}</span>

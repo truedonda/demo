@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /cozy-admin-2026/
+Disallow: /cart/
+Disallow: /orders/
+Disallow: /account/
+Allow: /

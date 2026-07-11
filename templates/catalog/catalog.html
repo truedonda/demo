@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  {% if active_category and active_category != 'all' %}
+    {% for cat in categories %}{% if cat.slug == active_category %}{{ cat.name|upper }}{% if active_gender == 'woman' %} FOR WOMEN{% elif active_gender == 'man' %} FOR MEN{% endif %} — COZYSHOP{% endif %}{% endfor %}
+  {% else %}
+    {% if active_gender == 'woman' %}Women's Clothing{% elif active_gender == 'man' %}Men's Clothing{% else %}All Clothing{% endif %} — COZYSHOP
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+{% include 'catalog/partials/catalog_page_content.html' %}
+{% endblock %}

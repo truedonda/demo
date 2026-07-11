@@ -1,0 +1,90 @@
+<div class="relative min-h-[calc(100vh-48px)] overflow-hidden">
+
+  <!-- COZY background logo -->
+  <div class="absolute inset-0 flex items-center justify-center pointer-events-none select-none" aria-hidden="true">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1456 820" fill="none"
+         class="w-[160vw] opacity-[0.06] text-black">
+      <text x="50%" y="72%" text-anchor="middle"
+        font-family="'Times New Roman', Georgia, serif"
+        font-size="520" font-weight="900" fill="currentColor" letter-spacing="-10">COZY</text>
+    </svg>
+  </div>
+
+  <div class="relative z-10 min-h-[calc(100vh-48px)] flex items-center justify-center px-6 py-16">
+    <div class="w-full max-w-md">
+
+      <div class="mb-8 text-center">
+        <h1 class="text-[13px] font-bold uppercase tracking-[0.2em] text-black">Sign In</h1>
+        <p class="text-[11px] text-[#aaa] uppercase tracking-widest mt-1">Welcome back</p>
+      </div>
+
+      <div class="bg-white border border-[#e8e8e8] p-8">
+        {% if error %}
+        <div class="mb-5 px-4 py-3 bg-[#fff5f5] border border-[#ffd0d0] text-[11px] text-red-600 uppercase tracking-widest font-semibold">
+          {{ error }}
+        </div>
+        {% endif %}
+
+        <form
+          method="post"
+          action="{% url 'accounts:login' %}"
+          class="space-y-5"
+          hx-post="{% url 'accounts:login' %}"
+          hx-target="#main-content"
+          hx-swap="innerHTML"
+          hx-push-url="true"
+        >
+          {% csrf_token %}
+          {% if request.GET.next %}
+          <input type="hidden" name="next" value="{{ request.GET.next }}">
+          {% endif %}
+
+          <div>
+            <label class="block text-[10px] font-semibold uppercase tracking-widest text-black mb-2">Username</label>
+            <input
+              type="text"
+              name="username"
+              value="{{ username|default:'' }}"
+              required
+              autocomplete="username"
+              class="w-full border border-[#d8d8d8] px-4 py-3 text-[13px] text-black placeholder-[#bbb] focus:outline-none focus:border-black transition-colors bg-white"
+              placeholder="Your username"
+            />
+          </div>
+
+          <div>
+            <label class="block text-[10px] font-semibold uppercase tracking-widest text-black mb-2">Password</label>
+            <input
+              type="password"
+              name="password"
+              required
+              autocomplete="current-password"
+              class="w-full border border-[#d8d8d8] px-4 py-3 text-[13px] text-black placeholder-[#bbb] focus:outline-none focus:border-black transition-colors bg-white"
+              placeholder="••••••••"
+            />
+          </div>
+
+          <button
+            type="submit"
+            class="w-full bg-black text-white py-4 text-[11px] font-bold uppercase tracking-widest hover:bg-[#222] transition-colors mt-2"
+          >Sign In</button>
+        </form>
+
+        <div class="mt-6 pt-6 border-t border-[#f0f0ee] text-center">
+          <p class="text-[11px] text-[#aaa] uppercase tracking-widest">
+            Don't have an account?
+            <a
+              href="{% url 'accounts:register' %}"
+              hx-get="{% url 'accounts:register' %}"
+              hx-target="#main-content"
+              hx-swap="innerHTML transition:true"
+              hx-push-url="true"
+              class="text-black font-semibold hover:text-[#555] transition-colors ml-1"
+            >Create one</a>
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

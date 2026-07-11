@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-[#f5f5f3]">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}COZYSHOP{% endblock %}</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/tailwind.css' %}" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- HTMX -->
+  <script src="{% static 'js/htmx.min.js' %}"></script>
+  <!-- Alpine.js -->
+  <script defer src="{% static 'js/alpine.min.js' %}"></script>
+  <style>
+    /* SPA page transition on #main-content */
+    #main-content { transition: opacity 0.12s ease-in; opacity: 1; }
+    .htmx-swapping #main-content { opacity: 0; transition: opacity 0.08s ease-out; }
+    .htmx-settling #main-content { opacity: 0; }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body
+  class="min-h-screen bg-[#f5f5f3] font-sans flex flex-col text-black"
+  x-data="cozyApp()"
+>
+
+  {% include 'partials/navbar.html' %}
+
+  <main class="flex-1 w-full" id="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% include 'partials/footer.html' %}
+
+  <!-- Overlay (shared for cart, wishlist, menu) -->
+  <div
+    x-show="cartOpen || wishlistOpen || menuOpen"
+    x-transition:enter="transition-opacity duration-300"
+    x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100"
+    x-transition:leave="transition-opacity duration-300"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0"
+    class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+    @click="cartOpen = false; wishlistOpen = false; menuOpen = false"
+    style="display:none"
+  ></div>
+
+  <!-- Menu + Sub-menu wrapper -->
+  <div
+    x-show="menuOpen"
+    x-transition:enter="transition-transform duration-300 ease-out"
+    x-transition:enter-start="-translate-x-full"
+    x-transition:enter-end="translate-x-0"
+    x-transition:leave="transition-transform duration-300 ease-in"
+    x-transition:leave-start="translate-x-0"
+    x-transition:leave-end="-translate-x-full"
+    class="fixed top-0 left-0 h-full flex z-50"
+    style="display:none"
+  >
+    <!-- Menu Sidebar (left panel) -->
+    <div class="h-full w-[320px] bg-white flex flex-col border-r border-[#d8d8d8] text-black shadow-2xl">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-[#d8d8d8]">
+        <button @click="menuOpen = false" class="hover:text-[#555] transition-colors" aria-label="Close menu">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <!-- Category nav (gender-filtered) -->
+      <nav
+        x-show="menuCategories.length > 0"
+        class="flex flex-col items-center px-6 py-4 gap-0 text-[13px] font-semibold uppercase tracking-widest text-center"
+      >
+        <template x-for="slug in menuCategories" :key="slug">
+          <a
+            :href="catUrl(slug)"
+            @click.prevent="menuOpen = false; htmx.ajax('GET', catUrl(slug), { target: '#main-content', swap: 'innerHTML transition:true', pushUrl: true })"
+            class="w-full py-3 border-b border-[#f0f0ee] last:border-0 hover:text-[#555] transition-colors"
+            x-text="catLabel(slug)"
+          ></a>
+        </template>
+        <!-- Switch gender -->
+        <div class="w-full border-t border-black mt-4 -mx-6" style="width: calc(100% + 3rem)"></div>
+        <p class="mt-4 text-[11px] font-bold uppercase tracking-widest text-black">OR</p>
+        <a
+          :href="activeGender === 'woman' ? '/shop/?gender=man' : '/shop/?gender=woman'"
+          @click.prevent="
+            const g = activeGender === 'woman' ? 'man' : 'woman';
+            try { localStorage.setItem('cozy_gender', g); } catch(e) {}
+            activeGender = g;
+            menuOpen = false;
+            htmx.ajax('GET', '/shop/?gender=' + g, { target: '#main-content', swap: 'innerHTML transition:true', pushUrl: true });
+          "
+          class="mt-1 text-[13px] font-semibold uppercase tracking-widest text-black hover:text-[#555] transition-colors"
+          x-text="activeGender === 'woman' ? 'Man Clothing' : 'Woman Clothing'"
+        ></a>
+      </nav>
+
+      <div class="mt-auto px-6 py-6 border-t border-[#d8d8d8]">
+        {% if user.is_authenticated %}
+        <a
+          href="{% url 'accounts:account' %}"
+          hx-get="{% url 'accounts:account' %}"
+          hx-target="#main-content"
+          hx-swap="innerHTML transition:true"
+          hx-push-url="true"
+          @click="menuOpen = false"
+          class="flex items-center gap-3 hover:opacity-70 transition-opacity"
+        >
+          <div class="w-8 h-8 rounded-full bg-[#f0f0ee] flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4 text-[#aaa]" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
+            </svg>
+          </div>
+          <p class="text-[12px] font-semibold uppercase tracking-widest text-black truncate">
+            {% if user.get_full_name %}{{ user.get_full_name }}{% else %}{{ user.username }}{% endif %}
+          </p>
+        </a>
+        {% else %}
+        <div class="flex flex-col gap-2">
+          <a
+            href="{% url 'accounts:login' %}"
+            hx-get="{% url 'accounts:login' %}"
+            hx-target="#main-content"
+            hx-swap="innerHTML transition:true"
+            hx-push-url="true"
+            @click="menuOpen = false"
+            class="block w-full py-2.5 bg-black text-white text-[10px] font-semibold uppercase tracking-widest hover:bg-[#222] transition-colors text-center"
+          >Sign In</a>
+          <a
+            href="{% url 'accounts:register' %}"
+            hx-get="{% url 'accounts:register' %}"
+            hx-target="#main-content"
+            hx-swap="innerHTML transition:true"
+            hx-push-url="true"
+            @click="menuOpen = false"
+            class="block w-full py-2.5 border border-black text-black text-[10px] font-semibold uppercase tracking-widest hover:bg-[#f5f5f3] transition-colors text-center"
+          >Create Account</a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Cart Sidebar -->
+  <div
+    x-show="cartOpen"
+    x-effect="if (cartOpen) fetchCart()"
+    x-transition:enter="transition-transform duration-300 ease-out"
+    x-transition:enter-start="translate-x-full"
+    x-transition:enter-end="translate-x-0"
+    x-transition:leave="transition-transform duration-300 ease-in"
+    x-transition:leave-start="translate-x-0"
+    x-transition:leave-end="translate-x-full"
+    class="fixed top-0 right-0 h-full w-full max-w-[360px] bg-white z-50 flex flex-col border-l border-[#d8d8d8] text-black shadow-2xl"
+    style="display:none"
+    id="cart-sidebar"
+  >
+    <div id="cart-sidebar-content" class="flex flex-col h-full"></div>
+  </div>
+
+  <!-- Wishlist Sidebar -->
+  <div
+    x-show="wishlistOpen"
+    x-effect="if (wishlistOpen) fetchWishlist()"
+    x-transition:enter="transition-transform duration-300 ease-out"
+    x-transition:enter-start="translate-x-full"
+    x-transition:enter-end="translate-x-0"
+    x-transition:leave="transition-transform duration-300 ease-in"
+    x-transition:leave-start="translate-x-0"
+    x-transition:leave-end="translate-x-full"
+    class="fixed top-0 right-[360px] h-full w-full max-w-[360px] bg-white z-[49] flex flex-col border-r border-[#d8d8d8] text-black shadow-xl"
+    style="display:none"
+    id="wishlist-sidebar"
+  >
+    <div id="wishlist-sidebar-content" class="flex flex-col h-full"></div>
+  </div>
+
+  <script>
+    // ── Alpine root component ────────────────────────────────────────────────
+    function cozyApp() {
+      const MAN_CATS   = ['all','knitwear','tops','outerwear','bottoms'];
+      const WOMAN_CATS = ['all','knitwear','tops','outerwear','bottoms','dresses','jumpsuits','loungewear'];
+      const LABELS = { all:'All', knitwear:'Knitwear', tops:'Tops', outerwear:'Outerwear',
+                       bottoms:'Bottoms', dresses:'Dresses', jumpsuits:'Jumpsuits', loungewear:'Loungewear' };
+
+      function readGender() {
+        // 1. Try localStorage (set by splash page)
+        try {
+          const stored = localStorage.getItem('cozy_gender');
+          if (stored === 'man' || stored === 'woman') return stored;
+        } catch(e) {}
+        // 2. Fallback: read from current URL ?gender=
+        const m = location.search.match(/[?&]gender=(man|woman)/);
+        if (m) {
+          try { localStorage.setItem('cozy_gender', m[1]); } catch(e) {}
+          return m[1];
+        }
+        return '';
+      }
+
+      return {
+        cartOpen: false,
+        wishlistOpen: false,
+        menuOpen: false,
+        filterOpen: false,
+        currentPath: location.pathname,
+        get onCatalog() { return this.currentPath.startsWith('/shop'); },
+        get onProduct() { return this.currentPath.startsWith('/product'); },
+        atTop: true,
+        activeGender: readGender(),
+        get menuCategories() {
+          if (this.activeGender === 'man')   return MAN_CATS;
+          if (this.activeGender === 'woman') return WOMAN_CATS;
+          return [];
+        },
+        catLabel(slug) { return LABELS[slug] || slug; },
+        catUrl(slug) {
+          const g = this.activeGender;
+          return slug === 'all' ? '/shop/?gender=' + g : '/shop/?gender=' + g + '&category=' + slug;
+        },
+        init() {
+          // Re-read gender whenever menu opens (in case user just came from splash)
+          this.$watch('menuOpen', open => {
+            if (open) this.activeGender = readGender();
+          });
+          // Update currentPath and reset filterOpen on SPA navigation
+          document.body.addEventListener('htmx:afterSwap', (evt) => {
+            // Use the pushed URL if available, otherwise fall back to location
+            const url = (evt.detail && evt.detail.pathInfo && evt.detail.pathInfo.finalRequestPath)
+              || location.pathname;
+            this.currentPath = url;
+            this.filterOpen = false;
+          });
+          // Also update on popstate (browser back/forward)
+          window.addEventListener('popstate', () => {
+            this.currentPath = location.pathname;
+          });
+          // Track scroll position for product page navbar
+          window.addEventListener('scroll', () => {
+            this.atTop = window.scrollY < 10;
+          }, { passive: true });
+        }
+      };
+    }
+
+    // ── CSRF helper ──────────────────────────────────────────────────────────
+    function getCsrf() {
+      const m = document.cookie.match(/csrftoken=([^;]+)/);
+      return m ? m[1] : '';
+    }
+
+    // ── SPA navigation helper ────────────────────────────────────────────────
+    // Navigate to a URL by swapping #main-content via HTMX (no full reload)
+    function navigateTo(url) {
+      htmx.ajax('GET', url, {
+        target: '#main-content',
+        swap: 'innerHTML transition:true',
+        pushUrl: true,
+      });
+    }
+
+    // ── Cart / Wishlist fetch helpers ────────────────────────────────────────
+    function fetchCart() {
+      fetch('{% url "cart:detail" %}')
+        .then(r => r.text())
+        .then(html => {
+          const el = document.getElementById('cart-sidebar-content');
+          if (el) {
+            el.innerHTML = html;
+            if (window.Alpine) Alpine.initTree(el);
+          }
+        });
+    }
+
+    function fetchWishlist() {
+      fetch('{% url "cart:wishlist_detail" %}')
+        .then(r => r.text())
+        .then(html => {
+          const el = document.getElementById('wishlist-sidebar-content');
+          if (el) {
+            el.innerHTML = html;
+            if (window.Alpine) Alpine.initTree(el);
+          }
+        });
+    }
+
+    // ── Cart / Wishlist event listeners ─────────────────────────────────────
+    document.body.addEventListener('cartUpdated', function() {
+      fetchCart();
+      // Update count badge by re-fetching it
+      fetch('{% url "cart:count" %}')
+        .then(r => r.text())
+        .then(html => {
+          const badge = document.getElementById('cart-count-badge');
+          if (badge) {
+            const tmp = document.createElement('div');
+            tmp.innerHTML = html;
+            const newBadge = tmp.firstElementChild;
+            if (newBadge) badge.replaceWith(newBadge);
+          }
+        });
+    });
+
+    document.body.addEventListener('wishlistUpdated', function() {
+      fetchWishlist();
+      fetch('{% url "cart:wishlist_count" %}')
+        .then(r => r.text())
+        .then(html => {
+          const badge = document.getElementById('wishlist-count-badge');
+          if (badge) {
+            const tmp = document.createElement('div');
+            tmp.innerHTML = html;
+            const newBadge = tmp.firstElementChild;
+            if (newBadge) badge.replaceWith(newBadge);
+          }
+        });
+    });
+
+    // ── HTMX: after content swap ─────────────────────────────────────────────
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+      const target = evt.detail.target;
+      if (!target || target.id !== 'main-content') return;
+
+      // Re-initialize Alpine on newly swapped content
+      if (window.Alpine) Alpine.initTree(target);
+
+      // Close all sidebars/menus on navigation
+      const bodyData = document.body._x_dataStack && document.body._x_dataStack[0];
+      if (bodyData) {
+        bodyData.cartOpen = false;
+        bodyData.wishlistOpen = false;
+        bodyData.menuOpen = false;
+      }
+
+      // Scroll to top
+      window.scrollTo({ top: 0, behavior: 'instant' });
+
+      // Update page title
+      const titleEl = target.querySelector('[data-page-title]');
+      if (titleEl) document.title = titleEl.dataset.pageTitle;
+    });
+
+    // ── HTMX: after settle — re-process htmx attrs in new content ────────────
+    document.body.addEventListener('htmx:afterSettle', function(evt) {
+      const target = evt.detail.target;
+      if (target && target.id === 'main-content') htmx.process(target);
+    });
+
+    // ── HTMX: history restore ────────────────────────────────────────────────
+    document.body.addEventListener('htmx:historyRestore', function() {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      const main = document.getElementById('main-content');
+      if (main && window.Alpine) Alpine.initTree(main);
+    });
+
+    // ── HTMX: configure requests — always send CSRF token ───────────────────
+    document.body.addEventListener('htmx:configRequest', function(evt) {
+      evt.detail.headers['X-CSRFToken'] = getCsrf();
+    });
+
+    // ── HTMX: handle HX-Redirect from server ────────────────────────────────
+    document.body.addEventListener('htmx:beforeSwap', function(evt) {
+      const xhr = evt.detail.xhr;
+      if (!xhr) return;
+      const redirect = xhr.getResponseHeader('HX-Redirect');
+      if (redirect) {
+        evt.preventDefault();
+        navigateTo(redirect);
+      }
+    });
+  </script>
+
+  {% block extra_scripts %}{% endblock %}
+
+</body>
+</html>

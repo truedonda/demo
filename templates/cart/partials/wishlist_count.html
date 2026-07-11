@@ -1,0 +1,9 @@
+<span
+  id="wishlist-count-badge"
+  class="absolute -top-1.5 -right-2 tabular-nums text-[9px] font-bold text-black"
+  hx-get="{% url 'cart:wishlist_count' %}"
+  hx-trigger="wishlistUpdated from:body"
+  hx-swap="outerHTML"
+  hx-push-url="false"
+  hx-boost="false"
+>{% if wishlist_count > 0 %}{{ wishlist_count }}{% endif %}</span>

@@ -1,0 +1,71 @@
+<div class="min-h-screen bg-[#111111] text-[#f4f4f4] px-6 xl:px-24 py-12 flex flex-col items-center justify-center">
+
+  <!-- Spinner icon -->
+  <div class="w-14 h-14 border border-[#2a2a2a] flex items-center justify-center mb-8">
+    <svg class="w-7 h-7 text-[#888] animate-spin" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+    </svg>
+  </div>
+
+  <h1 class="text-2xl font-semibold uppercase tracking-tight text-[#eee] mb-3">Awaiting Payment</h1>
+  <p class="text-xs uppercase tracking-widest text-[#888] mb-2">Order #{{ order.pk }}</p>
+  <p class="text-sm text-[#aaa] mb-10 max-w-sm text-center">
+    Your order has been created. Please complete the payment to confirm it.
+    Once payment is processed you will receive a confirmation at <span class="text-[#ccc]">{{ order.email }}</span>.
+  </p>
+
+  <!-- Payment details block -->
+  <div class="w-full max-w-md border border-[#2a2a2a] p-6 mb-10 space-y-4">
+    <h2 class="text-[10px] font-bold uppercase tracking-widest text-[#888] mb-4">Payment Details</h2>
+
+    <div class="flex justify-between text-xs text-[#aaa]">
+      <span class="uppercase tracking-widest">Amount</span>
+      <span class="font-semibold text-[#eee]">${{ order.total_price }}</span>
+    </div>
+    <div class="flex justify-between text-xs text-[#aaa]">
+      <span class="uppercase tracking-widest">Order</span>
+      <span class="font-semibold text-[#eee]">#{{ order.pk }}</span>
+    </div>
+
+    <div class="border-t border-[#2a2a2a] pt-4 space-y-2">
+      <p class="text-[10px] uppercase tracking-widest text-[#666] mb-2">Bank Transfer (Ukraine)</p>
+      <div class="flex justify-between text-xs text-[#aaa]">
+        <span class="uppercase tracking-widest">Bank</span>
+        <span class="text-[#eee]">ПриватБанк / Monobank</span>
+      </div>
+      <div class="flex justify-between text-xs text-[#aaa]">
+        <span class="uppercase tracking-widest">Card</span>
+        <span class="text-[#eee] font-mono tracking-widest">0000 0000 0000 0000</span>
+      </div>
+      <div class="flex justify-between text-xs text-[#aaa]">
+        <span class="uppercase tracking-widest">Recipient</span>
+        <span class="text-[#eee]">COZYSHOP</span>
+      </div>
+      <p class="text-[10px] text-[#555] mt-3">
+        Please include your order number <span class="text-[#888]">#{{ order.pk }}</span> in the payment comment.
+      </p>
+    </div>
+  </div>
+
+  <!-- Simulate payment buttons -->
+  <div class="flex gap-4 flex-wrap justify-center">
+    <a
+      href="{% url 'orders:payment_success' order.pk %}"
+      hx-get="{% url 'orders:payment_success' order.pk %}"
+      hx-target="#main-content"
+      hx-swap="innerHTML transition:true"
+      hx-push-url="true"
+      class="bg-white text-black px-8 py-4 text-xs font-bold uppercase tracking-widest hover:bg-[#eee] transition-colors"
+    >Simulate: Payment Successful</a>
+    <a
+      href="{% url 'orders:payment_failed' order.pk %}"
+      hx-get="{% url 'orders:payment_failed' order.pk %}"
+      hx-target="#main-content"
+      hx-swap="innerHTML transition:true"
+      hx-push-url="true"
+      class="border border-[#2a2a2a] text-[#888] px-8 py-4 text-xs font-bold uppercase tracking-widest hover:border-[#555] hover:text-[#ccc] transition-colors"
+    >Simulate: Payment Failed</a>
+  </div>
+
+</div>

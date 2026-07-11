@@ -1,0 +1,225 @@
+<nav
+  class="sticky top-0 z-30 w-full bg-white border-b border-[#d8d8d8]"
+  :class="onProduct && !atTop ? 'opacity-0 -translate-y-full pointer-events-none' : 'opacity-100 translate-y-0'"
+  style="transition: opacity 0.4s ease, transform 0.4s ease"
+  x-data="{
+    searchOpen: false,
+    searchQuery: '',
+    searchResults: null,
+    searchLoading: false,
+    searchTimer: null,
+    openSearch() {
+      this.searchOpen = true;
+      this.searchResults = null;
+      this.$nextTick(() => this.$refs.navSearchInput.focus());
+    },
+    closeSearch() {
+      this.searchOpen = false;
+      this.searchQuery = '';
+      this.searchResults = null;
+    },
+    onInput() {
+      clearTimeout(this.searchTimer);
+      const q = this.searchQuery.trim();
+      if (q.length < 2) {
+        this.searchResults = null;
+        return;
+      }
+      this.searchLoading = true;
+      this.searchTimer = setTimeout(() => {
+        fetch('/search/suggest/?q=' + encodeURIComponent(q), {
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(r => r.text())
+        .then(html => {
+          this.searchResults = html;
+          this.searchLoading = false;
+        })
+        .catch(() => { this.searchLoading = false; });
+      }, 250);
+    }
+  }"
+  @keydown.escape.window="closeSearch()"
+>
+  <!-- Top bar: product page — only back button (visible only at top) -->
+  <div
+    class="px-6 py-0 flex items-center h-12"
+    x-show="!searchOpen && onProduct && atTop"
+    style="display:none"
+  >
+    <button
+      @click="history.back()"
+      class="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-widest text-black hover:text-[#555] transition-colors"
+      aria-label="Go back"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
+      </svg>
+      Back
+    </button>
+  </div>
+
+  <!-- Top bar: normal state -->
+  <div
+    class="px-6 py-0 flex items-center justify-between h-12"
+    x-show="!searchOpen && !onProduct"
+    style="display:none"
+  >
+    <div class="flex items-center gap-5 text-[11px] font-semibold uppercase tracking-widest text-black">
+      <button @click="menuOpen = !menuOpen" class="flex items-center gap-1.5 hover:text-[#555] transition-colors" aria-label="Menu">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/>
+        </svg>
+      </button>
+      <button
+        x-show="onCatalog"
+        @click="filterOpen = true"
+        class="flex items-center gap-1.5 hover:text-[#555] transition-colors"
+        aria-label="Filter and sort"
+        style="display:none"
+      >Filter, Sort By</button>
+      <button @click="openSearch()" class="flex items-center gap-1.5 hover:text-[#555] transition-colors" aria-label="Search">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z"/>
+        </svg>
+      </button>
+    </div>
+
+    <a
+      href="{% url 'catalog:catalog' %}"
+      hx-get="{% url 'catalog:catalog' %}"
+      hx-target="#main-content"
+      hx-swap="innerHTML transition:true"
+      hx-push-url="true"
+      class="absolute left-1/2 -translate-x-1/2 text-[15px] font-bold tracking-[0.2em] uppercase text-black hover:text-[#555] transition-colors no-underline whitespace-nowrap"
+    >
+      COZYSHOP
+    </a>
+
+    <div class="flex items-center gap-5 text-[11px] font-semibold uppercase tracking-widest text-black">
+      <button
+        @click="cartOpen = true; $dispatch('cartOpen')"
+        class="relative flex items-center hover:text-[#555] transition-colors"
+        aria-label="Shopping bag"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007z"/>
+        </svg>
+        <span
+          id="cart-count-badge"
+          class="absolute -top-1.5 -right-2 tabular-nums text-[9px] font-bold text-black"
+          hx-get="{% url 'cart:count' %}"
+          hx-trigger="cartUpdated from:body"
+          hx-swap="outerHTML"
+          hx-push-url="false"
+          hx-boost="false"
+        >
+          {% if cart_count > 0 %}{{ cart_count }}{% endif %}
+        </span>
+      </button>
+      <button
+        @click="wishlistOpen = !wishlistOpen; if(wishlistOpen) { cartOpen = true; $dispatch('wishlistOpen'); $dispatch('cartOpen'); } else { cartOpen = false; wishlistOpen = false; }"
+        class="relative hover:text-[#555] transition-colors"
+        aria-label="Wishlist"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+        </svg>
+        <span
+          id="wishlist-count-badge"
+          class="absolute -top-1.5 -right-2 tabular-nums text-[9px] font-bold text-black"
+          hx-get="{% url 'cart:wishlist_count' %}"
+          hx-trigger="wishlistUpdated from:body"
+          hx-swap="outerHTML"
+          hx-push-url="false"
+          hx-boost="false"
+        >
+          {% if wishlist_count > 0 %}{{ wishlist_count }}{% endif %}
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Top bar: search input state -->
+  <div
+    class="h-12 flex items-center w-full px-4 gap-3"
+    x-show="searchOpen"
+    x-transition:enter="transition-opacity duration-200 ease-out"
+    x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100"
+    x-transition:leave="transition-opacity duration-150 ease-in"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0"
+    style="display:none"
+  >
+    <svg class="w-5 h-5 text-[#999] flex-shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z"/>
+    </svg>
+    <input
+      type="text"
+      placeholder="Search products…"
+      class="flex-1 h-full text-[13px] outline-none bg-transparent placeholder-[#aaa] text-black"
+      x-ref="navSearchInput"
+      x-model="searchQuery"
+      @input="onInput()"
+      autocomplete="off"
+    />
+    <!-- Loading spinner -->
+    <svg x-show="searchLoading" class="w-4 h-4 text-[#aaa] animate-spin flex-shrink-0" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+    </svg>
+    <button
+      type="button"
+      @click="closeSearch()"
+      class="flex-shrink-0 text-[#888] hover:text-black transition-colors"
+      aria-label="Close search"
+    >
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Full-screen results panel -->
+  <div
+    x-show="searchOpen"
+    x-transition:enter="transition-all duration-300 ease-out"
+    x-transition:enter-start="opacity-0 -translate-y-2"
+    x-transition:enter-end="opacity-100 translate-y-0"
+    x-transition:leave="transition-all duration-200 ease-in"
+    x-transition:leave-start="opacity-100 translate-y-0"
+    x-transition:leave-end="opacity-0 -translate-y-2"
+    class="fixed left-0 right-0 bg-white z-20 overflow-y-auto shadow-2xl"
+    style="display:none; top: 49px; bottom: 0;"
+  >
+    <!-- Empty / prompt state -->
+    <div
+      x-show="!searchResults && !searchLoading"
+      class="flex flex-col items-center justify-center h-full text-center px-6"
+    >
+      <svg class="w-10 h-10 text-[#ddd] mb-4" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z"/>
+      </svg>
+      <p class="text-[12px] text-[#ccc] uppercase tracking-widest">Start typing to search…</p>
+    </div>
+
+    <!-- Loading state -->
+    <div
+      x-show="searchLoading"
+      class="flex items-center justify-center h-32"
+    >
+      <svg class="w-6 h-6 text-[#ccc] animate-spin" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+      </svg>
+    </div>
+
+    <!-- Results injected by Alpine fetch -->
+    <div
+      x-show="searchResults && !searchLoading"
+      x-html="searchResults"
+      class="px-6 py-8"
+    ></div>
+  </div>
+</nav>

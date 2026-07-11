@@ -1,0 +1,23 @@
+<div class="min-h-screen bg-white text-black px-6 xl:px-24 py-12">
+  <h1 class="text-[15px] font-bold tracking-[0.15em] uppercase mb-12 text-black">Оформлення замовлення</h1>
+
+  {% if cart_empty %}
+  <div class="flex flex-col items-center justify-center py-32 text-[#aaa] text-xs uppercase tracking-widest font-semibold">
+    <p>Кошик порожній.</p>
+    <a
+      href="{% url 'catalog:catalog' %}"
+      hx-get="{% url 'catalog:catalog' %}"
+      hx-target="#main-content"
+      hx-swap="innerHTML transition:true"
+      hx-push-url="true"
+      class="mt-4 text-[#888] hover:text-black transition-colors border-b border-[#aaa]"
+    >Продовжити покупки</a>
+  </div>
+  {% else %}
+
+  <div id="checkout-content">
+    {% include 'orders/partials/checkout_form.html' %}
+  </div>
+
+  {% endif %}
+</div>

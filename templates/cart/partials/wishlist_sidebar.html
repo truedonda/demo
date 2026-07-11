@@ -1,0 +1,70 @@
+<!-- Wishlist Header -->
+<div class="p-6 border-b border-[#e8e8e8]">
+  <div class="flex items-center justify-between">
+    <h2 class="text-[11px] font-bold uppercase tracking-widest text-black flex items-center gap-2">
+      Wishlist <span class="text-[#888] font-normal">({{ wishlist_products|length }})</span>
+    </h2>
+    <button
+      @click="wishlistOpen = false; cartOpen = false"
+      class="text-[#888] hover:text-black transition-colors"
+      aria-label="Close wishlist"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<!-- Wishlist Items -->
+<div class="flex-1 overflow-y-auto px-6 py-4 space-y-6">
+  {% if not wishlist_products %}
+  <div class="h-full flex flex-col items-center justify-center text-[#aaa] tracking-widest uppercase text-[10px] font-semibold py-20">
+    Your wishlist is empty.
+  </div>
+  {% else %}
+  {% for product in wishlist_products %}
+  <div class="flex gap-4">
+    {% with product.all_images as imgs %}
+    {% if imgs %}
+    <a href="{% url 'catalog:product_detail' product.slug %}" @click="wishlistOpen = false; cartOpen = false">
+      <img
+        src="{{ imgs.0.image.url }}"
+        alt="{{ product.name }}"
+        class="w-16 h-24 object-cover bg-[#ebebeb] shrink-0 hover:opacity-80 transition-opacity"
+      />
+    </a>
+    {% else %}
+    <div class="w-16 h-24 bg-[#ebebeb] shrink-0 flex items-center justify-center text-[#aaa] text-[8px] uppercase">No img</div>
+    {% endif %}
+    {% endwith %}
+
+    <div class="flex-1 flex flex-col justify-center min-w-0">
+      <a href="{% url 'catalog:product_detail' product.slug %}" @click="wishlistOpen = false; cartOpen = false"
+         class="text-[10px] font-bold uppercase tracking-widest pr-4 truncate leading-snug text-black hover:text-[#555] transition-colors">
+        {{ product.name }}
+      </a>
+      <p class="text-[10px] text-[#888] mt-1">${{ product.price }}</p>
+
+      <div class="flex items-center gap-3 mt-3">
+        <!-- Remove from Wishlist -->
+        <button
+          type="button"
+          class="text-[#888] hover:text-black text-[9px] uppercase tracking-widest transition-colors font-semibold border-b border-transparent hover:border-black pb-0.5"
+          @click="
+            fetch('{% url 'cart:wishlist_remove' product.pk %}', {
+              method: 'POST',
+              headers: {'X-CSRFToken': getCsrf(), 'Content-Type': 'application/x-www-form-urlencoded'},
+              body: ''
+            }).then(r=>r.text()).then(html=>{
+              document.getElementById('wishlist-sidebar-content').innerHTML=html;
+              htmx.trigger(document.body,'wishlistUpdated');
+            })
+          "
+        >Remove</button>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+  {% endif %}
+</div>

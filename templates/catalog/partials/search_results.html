@@ -1,0 +1,53 @@
+{# БЕЗОПАСНОСТЬ (Fix #23): Этот шаблон рендерится через x-html (Alpine innerHTML). #}
+{# НИКОГДА не используйте |safe, {% autoescape off %} или mark_safe() здесь. #}
+{# Все переменные Django автоматически экранируются — это обязательно для защиты от XSS. #}
+{% if products %}
+  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+    {% for product in products %}
+      <a
+        href="{% url 'catalog:product_detail' product.slug %}"
+        class="group flex flex-col gap-2 hover:opacity-80 transition-opacity"
+        @click="closeSearch()"
+      >
+        <div class="aspect-[3/4] bg-[#f0f0ee] overflow-hidden rounded-sm">
+          {% if product.primary_image %}
+            <img
+              src="{{ product.primary_image.url }}"
+              alt="{{ product.name }}"
+              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+          {% else %}
+            <div class="w-full h-full flex items-center justify-center text-[#bbb]">
+              <svg class="w-10 h-10" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3 21h18M3.75 3h16.5A.75.75 0 0121 3.75v16.5a.75.75 0 01-.75.75H3.75A.75.75 0 013 20.25V3.75A.75.75 0 013.75 3z"/>
+              </svg>
+            </div>
+          {% endif %}
+        </div>
+        <div>
+          <p class="text-[12px] font-semibold uppercase tracking-wide text-black leading-tight truncate">{{ product.name }}</p>
+          <p class="text-[11px] text-[#888] mt-0.5">${{ product.price }}</p>
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+  {% if query %}
+  <div class="mt-6 pt-4 border-t border-[#eee]">
+    <a
+      href="{% url 'catalog:catalog' %}?q={{ query }}"
+      class="text-[11px] font-semibold uppercase tracking-widest text-black hover:text-[#555] transition-colors"
+      @click="closeSearch()"
+    >
+      View all results for "{{ query }}" →
+    </a>
+  </div>
+  {% endif %}
+{% else %}
+  <div class="flex flex-col items-center justify-center py-16 text-center">
+    <svg class="w-10 h-10 text-[#ccc] mb-4" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z"/>
+    </svg>
+    <p class="text-[13px] font-semibold uppercase tracking-widest text-black">No results for "{{ query }}"</p>
+    <p class="text-[11px] text-[#aaa] mt-1">Try a different search term</p>
+  </div>
+{% endif %}

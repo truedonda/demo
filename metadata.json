@@ -1,0 +1,6 @@
+{
+  "name": "COZYSHOP",
+  "description": "Minimalist e-commerce platform for clothing with catalog, cart, and account features.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,52 @@
+<div class="min-h-screen bg-[#111111] text-[#f4f4f4] px-6 xl:px-24 py-12 flex flex-col items-center justify-center">
+
+  <!-- X icon -->
+  <div class="w-14 h-14 border border-[#2a2a2a] flex items-center justify-center mb-8">
+    <svg class="w-7 h-7 text-red-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+    </svg>
+  </div>
+
+  <h1 class="text-2xl font-semibold uppercase tracking-tight text-[#eee] mb-3">Payment Failed</h1>
+  <p class="text-xs uppercase tracking-widest text-[#888] mb-2">Order #{{ order.pk }}</p>
+  <p class="text-sm text-[#aaa] mb-10 max-w-sm text-center">
+    Unfortunately your payment could not be processed. Your order has been saved — you can try again or contact support.
+  </p>
+
+  <!-- Order info -->
+  <div class="w-full max-w-md border border-[#2a2a2a] p-6 mb-10 space-y-3">
+    <h2 class="text-[10px] font-bold uppercase tracking-widest text-[#888] mb-4">Order Details</h2>
+    <div class="flex justify-between text-xs text-[#aaa]">
+      <span class="uppercase tracking-widest">Order</span>
+      <span class="font-semibold text-[#eee]">#{{ order.pk }}</span>
+    </div>
+    <div class="flex justify-between text-xs text-[#aaa]">
+      <span class="uppercase tracking-widest">Amount</span>
+      <span class="font-semibold text-[#eee]">${{ order.total_price }}</span>
+    </div>
+    <div class="flex justify-between text-xs text-[#aaa]">
+      <span class="uppercase tracking-widest">Status</span>
+      <span class="font-semibold text-red-400 uppercase tracking-widest">Failed</span>
+    </div>
+  </div>
+
+  <div class="flex gap-4 flex-wrap justify-center">
+    <a
+      href="{% url 'orders:payment_pending' order.pk %}"
+      hx-get="{% url 'orders:payment_pending' order.pk %}"
+      hx-target="#main-content"
+      hx-swap="innerHTML transition:true"
+      hx-push-url="true"
+      class="bg-white text-black px-8 py-4 text-xs font-bold uppercase tracking-widest hover:bg-[#eee] transition-colors"
+    >Try Again</a>
+    <a
+      href="{% url 'catalog:catalog' %}"
+      hx-get="{% url 'catalog:catalog' %}"
+      hx-target="#main-content"
+      hx-swap="innerHTML transition:true"
+      hx-push-url="true"
+      class="border border-[#2a2a2a] text-[#888] px-8 py-4 text-xs font-bold uppercase tracking-widest hover:border-[#555] hover:text-[#ccc] transition-colors"
+    >Continue Shopping</a>
+  </div>
+
+</div>

@@ -1,0 +1,21 @@
+{
+  "name": "cozyshop-django-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Frontend build for CozyShop Django project",
+  "scripts": {
+    "build:css": "tailwindcss -i ./static/src/input.css -o ./static/css/tailwind.css --minify",
+    "watch:css": "tailwindcss -i ./static/src/input.css -o ./static/css/tailwind.css --watch",
+    "copy:htmx": "node -e \"require('fs').copyFileSync('./node_modules/htmx.org/dist/htmx.min.js', './static/js/htmx.min.js')\"",
+    "copy:alpine": "node -e \"require('fs').copyFileSync('./node_modules/alpinejs/dist/cdn.min.js', './static/js/alpine.min.js')\"",
+    "copy:libs": "npm run copy:htmx && npm run copy:alpine",
+    "build": "npm run build:css && npm run copy:libs"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
+  },
+  "dependencies": {
+    "alpinejs": "^3.14.9",
+    "htmx.org": "^1.9.12"
+  }
+}

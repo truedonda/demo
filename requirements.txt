@@ -1,0 +1,17 @@
+Django==5.0.6
+psycopg2-binary==2.9.9
+gunicorn==22.0.0
+Pillow==10.3.0
+python-dotenv==1.0.1
+whitenoise==6.7.0
+django-debug-toolbar==4.4.6
+django-redis==5.4.0
+redis==5.0.8
+
+# Render.com deployment
+dj-database-url==2.2.0
+
+# Optional: Cloudinary for persistent media storage
+# Uncomment if you set CLOUDINARY_URL env var on Render:
+# cloudinary==1.40.0
+# django-cloudinary-storage==0.3.0
