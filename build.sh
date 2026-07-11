@@ -1,19 +1,21 @@
 #!/usr/bin/env bash
 # Render.com build script
-# Poetry installs Python dependencies automatically before this script runs.
-# We only need to handle npm, collectstatic, media copy, and migrate.
+# Poetry installs Python deps into .venv before this script runs.
 set -o errexit
+
+# Use Python from Poetry's venv
+PYTHON=".venv/bin/python"
 
 # Build Tailwind CSS
 npm install
 npm run build
 
 # Collect static files
-python manage.py collectstatic --noinput --settings=config.settings.render
+$PYTHON manage.py collectstatic --noinput --settings=config.settings.render
 
 # Copy media files into staticfiles/media/ AFTER collectstatic.
 mkdir -p staticfiles/media
 cp -r media/. staticfiles/media/
 
 # Run database migrations
-python manage.py migrate --settings=config.settings.render
+$PYTHON manage.py migrate --settings=config.settings.render
