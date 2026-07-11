@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "cozyshop"
+version = "0.1.0"
+description = "CozyShop Django e-commerce"
+authors = ["truedonda"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.13"
+Django = "5.0.6"
+psycopg2-binary = "2.9.9"
+gunicorn = "22.0.0"
+Pillow = "11.0.0"
+python-dotenv = "1.0.1"
+whitenoise = "6.7.0"
+django-debug-toolbar = "4.4.6"
+django-redis = "5.4.0"
+redis = "5.0.8"
+dj-database-url = "2.2.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

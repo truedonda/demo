@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 # Render.com build script
+# Poetry installs Python dependencies automatically before this script runs.
+# We only need to handle npm, collectstatic, media copy, and migrate.
 set -o errexit
-
-# Render uses Poetry by default and creates a .venv.
-# We install via pip into that same venv so packages are available at runtime.
-pip install -r requirements.txt
 
 # Build Tailwind CSS
 npm install
