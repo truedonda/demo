@@ -9,6 +9,7 @@ services:
     name: cozyshop-redis
     plan: free
     maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
 
   - type: web
     name: cozyshop
