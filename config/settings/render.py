@@ -41,7 +41,7 @@ DATABASES = {
     'default': dj_database_url.parse(
         _db_url,
         conn_max_age=60,
-        conn_health_checks=True,
+        engine='django.db.backends.postgresql',
     )
 }
 
