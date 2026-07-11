@@ -42,8 +42,11 @@ DATABASES = {
         _db_url,
         conn_max_age=60,
         engine='django.db.backends.postgresql',
+        ssl_require=True,
     )
 }
+# psycopg3 compatibility: ensure ENGINE uses psycopg3 if available
+DATABASES['default']['ENGINE'] = 'django.db.backends.postgresql'
 
 # ── Cache — Redis from Render ─────────────────────────────────────────────────
 _redis_url = os.environ.get('REDIS_URL', '')
