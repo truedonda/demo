@@ -1,42 +1,69 @@
 """
 Render.com production settings.
-Extends production.py with Render-specific overrides:
-  - WhiteNoise for static files AND media files
-  - DATABASE_URL env var support via dj-database-url
-  - REDIS_URL from Render Redis add-on
+Inherits from base.py (NOT production.py) to avoid DB_NAME/DB_USER/DB_PASSWORD
+requirements — Render provides DATABASE_URL instead.
 
-Media strategy:
-  Product photos are committed to Git in media/.
-  build.sh copies media/ → staticfiles/media/ AFTER collectstatic runs,
-  so WhiteNoise serves /media/* directly from STATIC_ROOT/media/.
-  WHITENOISE_ROOT is not used — instead we rely on the fact that
-  WhiteNoise serves everything under STATIC_ROOT at STATIC_URL,
-  and we add a separate URL route for /media/ in urls.py via
-  django.views.static.serve (DEBUG=False safe via WhiteNoise).
-
-  Simpler approach used here:
-  - STATIC_ROOT = staticfiles/
-  - build.sh: cp media/ → staticfiles/media/
-  - MEDIA_URL = /static/media/   ← WhiteNoise serves this automatically
-  - All image URLs in templates will be /static/media/products/...
+Security settings from production.py are replicated here explicitly.
 """
 import os
 import dj_database_url
-from .production import *
+from .base import *
 
-# ── Database — use DATABASE_URL from Render ───────────────────────────────────
+# ── Core ──────────────────────────────────────────────────────────────────────
+DEBUG = False
+
+# Secret key — must be set via Render environment variable
+_secret = os.environ.get('DJANGO_SECRET_KEY', '')
+if not _secret:
+    raise Exception('DJANGO_SECRET_KEY environment variable is not set.')
+SECRET_KEY = _secret
+
+# Allowed hosts — set via Render environment variable
+_hosts = os.environ.get('DJANGO_ALLOWED_HOSTS', '')
+ALLOWED_HOSTS = [h.strip() for h in _hosts.split(',') if h.strip()] if _hosts else []
+
+# ── Security ──────────────────────────────────────────────────────────────────
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SECURE_HSTS_SECONDS = 31536000
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+X_FRAME_OPTIONS = 'DENY'
+SECURE_CONTENT_TYPE_NOSNIFF = True
+
+# ── Database — DATABASE_URL from Render ───────────────────────────────────────
 _db_url = os.environ.get('DATABASE_URL', '')
-if _db_url:
-    DATABASES = {
-        'default': dj_database_url.parse(
-            _db_url,
-            conn_max_age=60,
-            conn_health_checks=True,
-        )
-    }
+if not _db_url:
+    raise Exception('DATABASE_URL environment variable is not set.')
+DATABASES = {
+    'default': dj_database_url.parse(
+        _db_url,
+        conn_max_age=60,
+        conn_health_checks=True,
+    )
+}
 
-# ── Static files — WhiteNoise serves them directly ───────────────────────────
-# Insert WhiteNoise right after SecurityMiddleware
+# ── Cache — Redis from Render ─────────────────────────────────────────────────
+_redis_url = os.environ.get('REDIS_URL', '')
+if _redis_url:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': _redis_url,
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                'IGNORE_EXCEPTIONS': False,
+            },
+            'KEY_PREFIX': 'cozyshop',
+            'TIMEOUT': 60 * 15,
+        }
+    }
+    SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+    SESSION_CACHE_ALIAS = 'default'
+
+# ── Static files — WhiteNoise ─────────────────────────────────────────────────
 _security_idx = MIDDLEWARE.index('django.middleware.security.SecurityMiddleware')
 MIDDLEWARE.insert(_security_idx + 1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 
@@ -45,8 +72,6 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # ── Media files — served by WhiteNoise under /static/media/ ──────────────────
 # build.sh copies media/ → staticfiles/media/ after collectstatic.
 # WhiteNoise serves all files under STATIC_ROOT at STATIC_URL (/static/).
-# So /static/media/products/foo.jpg works automatically.
-# We override MEDIA_URL so Django's ImageField.url returns the correct path.
 MEDIA_URL = '/static/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -55,9 +80,7 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-        },
+        'console': {'class': 'logging.StreamHandler'},
     },
     'root': {
         'handlers': ['console'],
