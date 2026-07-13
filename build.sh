@@ -19,6 +19,9 @@ cp -r media/. staticfiles/media/
 # Run database migrations
 poetry run python manage.py migrate --settings=config.settings.render
 
+# Upload existing media files to Cloudinary (skips already uploaded)
+poetry run python manage.py upload_media_to_cloudinary --settings=config.settings.render
+
 # Create superuser automatically if DJANGO_SUPERUSER_* env vars are set
 if [ -n "$DJANGO_SUPERUSER_USERNAME" ] && [ -n "$DJANGO_SUPERUSER_PASSWORD" ] && [ -n "$DJANGO_SUPERUSER_EMAIL" ]; then
     poetry run python manage.py createsuperuser \
