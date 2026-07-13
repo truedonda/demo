@@ -72,16 +72,11 @@ MIDDLEWARE.insert(_security_idx + 1, 'whitenoise.middleware.WhiteNoiseMiddleware
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# ── Media files — Cloudinary ─────────────────────────────────────────────────
-INSTALLED_APPS = INSTALLED_APPS + ['cloudinary_storage', 'cloudinary']
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-MEDIA_URL = '/media/'
-
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME', 'wktsuy46'),
-    'API_KEY': os.environ.get('CLOUDINARY_API_KEY', '884289483164339'),
-    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET', 'LY-bvwsOOlQhyLvDve475MwfWwQ'),
-}
+# ── Media files — served via WhiteNoise from staticfiles/media/ ───────────────
+# build.sh copies media/ → staticfiles/media/ so WhiteNoise serves them.
+# MEDIA_URL must match so Django's ImageField.url returns the correct path.
+MEDIA_URL = '/static/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 LOGGING = {
