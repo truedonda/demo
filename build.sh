@@ -9,18 +9,16 @@ poetry install --no-interaction --no-ansi
 npm install
 npm run build
 
-# Collect static files
-poetry run python manage.py collectstatic --noinput --settings=config.settings.render
+# Copy media files into static/media/ BEFORE collectstatic
+# so they get picked up as static files and served by WhiteNoise at /static/media/
+mkdir -p static/media
+cp -r media/. static/media/
 
-# Copy media files into staticfiles/media/ AFTER collectstatic.
-mkdir -p staticfiles/media
-cp -r media/. staticfiles/media/
+# Collect static files (includes static/media/ now)
+poetry run python manage.py collectstatic --noinput --settings=config.settings.render
 
 # Run database migrations
 poetry run python manage.py migrate --settings=config.settings.render
-
-# Upload existing media files to Cloudinary (skips already uploaded)
-poetry run python manage.py upload_media_to_cloudinary --settings=config.settings.render
 
 # Create superuser automatically if DJANGO_SUPERUSER_* env vars are set
 if [ -n "$DJANGO_SUPERUSER_USERNAME" ] && [ -n "$DJANGO_SUPERUSER_PASSWORD" ] && [ -n "$DJANGO_SUPERUSER_EMAIL" ]; then

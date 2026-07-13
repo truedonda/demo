@@ -70,11 +70,15 @@ if _redis_url:
 _security_idx = MIDDLEWARE.index('django.middleware.security.SecurityMiddleware')
 MIDDLEWARE.insert(_security_idx + 1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Use CompressedStaticFilesStorage (no manifest/hashing) so media file names
+# are preserved exactly as stored in the DB (products/foo.jpg → /static/media/products/foo.jpg)
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
-# ── Media files — served via WhiteNoise from staticfiles/media/ ───────────────
-# build.sh copies media/ → staticfiles/media/ so WhiteNoise serves them.
-# MEDIA_URL must match so Django's ImageField.url returns the correct path.
+# build.sh copies media/ → static/media/ BEFORE collectstatic,
+# so collectstatic picks them up and WhiteNoise serves them at /static/media/
+STATICFILES_DIRS = [BASE_DIR / 'static']
+
+# MEDIA_URL must match so Django's ImageField.url returns /static/media/products/foo.jpg
 MEDIA_URL = '/static/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
