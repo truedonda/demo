@@ -72,11 +72,10 @@ MIDDLEWARE.insert(_security_idx + 1, 'whitenoise.middleware.WhiteNoiseMiddleware
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# ── Media files — served by WhiteNoise under /static/media/ ──────────────────
-# build.sh copies media/ → staticfiles/media/ after collectstatic.
-# WhiteNoise serves all files under STATIC_ROOT at STATIC_URL (/static/).
-MEDIA_URL = '/static/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# ── Media files — Cloudinary ─────────────────────────────────────────────────
+INSTALLED_APPS = INSTALLED_APPS + ['cloudinary_storage', 'cloudinary']
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+MEDIA_URL = '/media/'
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 LOGGING = {

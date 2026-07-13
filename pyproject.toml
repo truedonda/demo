@@ -18,6 +18,8 @@ django-debug-toolbar = "4.4.6"
 django-redis = "5.4.0"
 redis = "5.0.8"
 dj-database-url = "2.2.0"
+cloudinary = "^1.40.0"
+django-cloudinary-storage = "^0.3.0"
 
 [build-system]
 requires = ["poetry-core"]
