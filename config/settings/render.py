@@ -77,6 +77,12 @@ INSTALLED_APPS = INSTALLED_APPS + ['cloudinary_storage', 'cloudinary']
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 MEDIA_URL = '/media/'
 
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME', 'wktsuy46'),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY', '884289483164339'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET', 'LY-bvwsOOlQhyLvDve475MwfWwQ'),
+}
+
 # ── Logging ───────────────────────────────────────────────────────────────────
 LOGGING = {
     'version': 1,
